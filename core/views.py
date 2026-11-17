@@ -3,9 +3,9 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (Community, CreatePost, Comment, ReportComment,
-                     Like, Membership, ReportPost, MemberStatus)
+                     Like, Membership, ReportPost, MemberStatus, Tag)
 from .serialiserz import CommunitySerializer, CreatePostSerializer, ReportPostSerializer, LikeSerializer, \
-    MembershipSerializer, ReportCommentSerializer, CommentSerializer
+    MembershipSerializer, ReportCommentSerializer, CommentSerializer, TagSerializer
 from django.db import transaction
 
 class CommunityViewSet(viewsets.ModelViewSet):
@@ -35,6 +35,8 @@ class MembershipViewSet(viewsets.ModelViewSet):
         role = request.data.get('role')
 
         if not role and MemberStatus.values:
+            raise serializers.ValidationError({'role': 'invalid role.'})
+        if role not in MemberStatus.values:
             raise serializers.ValidationError({'role': 'invalid role.'})
         membership.role = role
         membership.save(update_fields=['role'])
@@ -95,3 +97,8 @@ class ReportCommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer

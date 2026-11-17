@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
+
 from accounts.serializers import CreatorUserSerializer
 from .models import (Tag,Comment,Community,CreatePost,
                      ReportComment,ReportPost,Like,Membership)
@@ -12,7 +14,7 @@ class TagSerializer(serializers.ModelSerializer):
         ]
 
 class CommunitySerializer(serializers.ModelSerializer):
-    tag = TagSerializer(read_only=True,many=True)
+    tag = PrimaryKeyRelatedField(queryset=Tag.objects.all(),many=True)
     class Meta:
         model = Community
         fields = [

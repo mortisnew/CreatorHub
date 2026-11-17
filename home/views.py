@@ -41,7 +41,7 @@ class ExploreViewSet(ListAPIView):
         )
         explore_score = explore_score.annotate(
             trend_score=(
-                F('like_count') + 2 * F('comment_count') /
+                (F('like_count') + 2 * F('comment_count')) /
                 Power(F('hour_passed') + Value(2.0),Value(1.5))
             )
         ).order_by('-trend_score')

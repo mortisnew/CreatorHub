@@ -33,6 +33,9 @@ class LoginView(APIView):
             return Response({
                 'detail': 'Incorrect username or password.'},
                 status=status.HTTP_401_UNAUTHORIZED)
+        return Response({
+            'detail': 'Invalid username or password.'
+        },status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -42,8 +45,8 @@ class LogoutView(APIView):
             return Response({'detail':'Refresh token is required'},
             status=status.HTTP_400_BAD_REQUEST)
         try:
-            token = RefreshToken.for_user(request.user)
-            if str(token['user.id']) != request.user.id:
+            token = RefreshToken(refresh)
+            if str(token['user_id']) != request.user.id:
                 return Response({'detail':'invalid refresh token'},
                                 status=status.HTTP_400_BAD_REQUEST)
             token.blacklist()

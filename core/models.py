@@ -27,9 +27,9 @@ class Community(models.Model):
 
 class Membership(models.Model):
     user = models.ForeignKey(CreatorUser, on_delete=models.CASCADE)
-    community = models.ForeignKey(Community, on_delete=models.CASCADE)
+    community = models.ForeignKey(Community, on_delete=models.CASCADE,related_name='memberships')
     role = models.CharField(choices=MemberStatus.choices,
-                                  default=MemberStatus.MEMBER)
+                                  default=MemberStatus.MEMBER,max_length=10)
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -61,6 +61,8 @@ class Comment(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE,
                                blank=True, null=True,related_name='replies')
     content = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.content[0:15]

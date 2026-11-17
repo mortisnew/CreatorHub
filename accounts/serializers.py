@@ -13,15 +13,15 @@ class CreatorUserSerializer(serializers.ModelSerializer):
                   'age','password','password2')
         extra_kwargs = {'password': {'write_only': True}}
 
-        def validate(self, data):
-            if data['password'] != data['password2']:
-                raise serializers.ValidationError('Passwords must match.')
-            return data
+    def validate(self, data):
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError('Passwords must match.')
+        return data
 
-        def create(self, validated_data):
-            validated_data.pop('password2')
-            password = validated_data.pop('password')
-            return CreatorUser.objects.create_user(password=password,
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        password = validated_data.pop('password')
+        return CreatorUser.objects.create_user(password=password,
                                                    **validated_data)
 
 
