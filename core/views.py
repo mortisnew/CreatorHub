@@ -1,11 +1,16 @@
-from rest_framework import serializers
+from typing import Any
+
+from rest_framework import serializers, status
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 from .models import (Community, CreatePost, Comment, ReportComment,
-                     Like, Membership, ReportPost, MemberStatus, Tag)
-from .serialiserz import CommunitySerializer, CreatePostSerializer, ReportPostSerializer, LikeSerializer, \
-    MembershipSerializer, ReportCommentSerializer, CommentSerializer, TagSerializer
+                     Like, Membership, ReportPost, MemberStatus,
+                     Tag,BookMark)
+from .serialiserz import (CommunitySerializer, CreatePostSerializer, ReportPostSerializer, LikeSerializer, \
+    MembershipSerializer, ReportCommentSerializer, CommentSerializer,
+                          TagSerializer,BookmarkSerializer)
 from django.db import transaction
 
 class CommunityViewSet(viewsets.ModelViewSet):
@@ -34,8 +39,6 @@ class MembershipViewSet(viewsets.ModelViewSet):
         membership = self.get_object()
         role = request.data.get('role')
 
-        if not role and MemberStatus.values:
-            raise serializers.ValidationError({'role': 'invalid role.'})
         if role not in MemberStatus.values:
             raise serializers.ValidationError({'role': 'invalid role.'})
         membership.role = role
@@ -50,7 +53,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
 
 class CreatePostViewSet(viewsets.ModelViewSet):
     queryset = CreatePost.objects.all()
@@ -102,3 +104,14 @@ class ReportCommentViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+
+
+class BookmarkViewSet(viewsets.ModelViewSet):
+    queryset = BookMark.objects.all()
+    serializer_class = BookmarkSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)

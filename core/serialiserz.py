@@ -3,7 +3,7 @@ from rest_framework.relations import PrimaryKeyRelatedField
 
 from accounts.serializers import CreatorUserSerializer
 from .models import (Tag,Comment,Community,CreatePost,
-                     ReportComment,ReportPost,Like,Membership)
+                     ReportComment,ReportPost,Like,Membership,BookMark)
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -89,8 +89,10 @@ class CommentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id','user','created_at']
     def validate(self, validated_data):
-        parent = validated_data.get('parent')
+        parent = validated_data.get('parent', self.instance.parent if self.instance else None)
         post = validated_data.get('post')
+        if post is None:
+            post = self.instance.post
         if parent and parent.post_id != post.id:
             raise serializers.ValidationError(
                 'Parent comment must belong to the same post'
@@ -146,3 +148,13 @@ class LikeSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['id','created_at']
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    user = CreatorUserSerializer(read_only=True)
+    post = serializers.PrimaryKeyRelatedField(
+        queryset=CreatePost.objects.all()
+    )
+    class Meta:
+        model = BookMark
+        fields = ['id','user','post']

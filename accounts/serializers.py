@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CreatorLink,CreatorUser
+from .models import CreatorLink,CreatorUser,Blocklist
 
 class CreatorUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -40,7 +40,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 class ProfileSerializer(serializers.ModelSerializer):
-    links = CreatorLinkSerializer(many=True)
+    links = CreatorLinkSerializer(many=True,read_only=True)
     class Meta:
         model = CreatorUser
         fields = ('id',
@@ -52,3 +52,17 @@ class ProfileSerializer(serializers.ModelSerializer):
                   'bio',
                   'links')
         read_only_fields = ('id','email')
+
+class BlocklistSerializer(serializers.ModelSerializer):
+    blocker = CreatorUserSerializer(read_only=True)
+    class Meta:
+        model = Blocklist
+        fields = ('id','blocker','blocked','created_at')
+        extra_kwargs = {'created_at': {'read_only': True}}
+
+    def validate_blocked(self, value):
+        if value == self.context['request'].user:
+            raise serializers.ValidationError(
+                'You cannot block yourself.'
+            )
+        return value

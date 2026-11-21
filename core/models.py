@@ -1,4 +1,3 @@
-
 from django.db import models
 from accounts.models import CreatorUser
 
@@ -129,5 +128,15 @@ class Like(models.Model):
                 name='unique_like',
             )
         ]
+class BookMark(models.Model):
+    user = models.ForeignKey(CreatorUser, on_delete=models.CASCADE)
+    post = models.ForeignKey(CreatePost, on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'post'],
+                name='unique_bookmark',
+            )
+        ]
 

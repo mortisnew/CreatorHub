@@ -1,12 +1,15 @@
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CreatorUser,CreatorLink
+from .models import CreatorUser,CreatorLink,Blocklist
 from .serializers import (CreatorLinkSerializer, CreatorUserSerializer,
-                          LoginSerializer, ProfileSerializer)
+                          LoginSerializer, ProfileSerializer,BlocklistSerializer)
+from rest_framework.generics import RetrieveUpdateAPIView
+
 
 class SignUpView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -46,14 +49,16 @@ class LogoutView(APIView):
             status=status.HTTP_400_BAD_REQUEST)
         try:
             token = RefreshToken(refresh)
-            if str(token['user_id']) != request.user.id:
+            if str(token['user_id']) != str(request.user.id):
                 return Response({'detail':'invalid refresh token'},
                                 status=status.HTTP_400_BAD_REQUEST)
             token.blacklist()
             return Response({'detail':'logout successful'},status=status.HTTP_200_OK)
-        except Exception:
-            return Response({'detail':'invalid refresh token'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        except TokenError:
+            return Response(
+                    {'detail': 'Invalid or expired refresh token.'},
+                    status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 
@@ -64,14 +69,22 @@ class CreatorLinkViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
 
-class ProfileViewSet(viewsets.ModelViewSet):
-    queryset = CreatorUser.objects.all()
-    serializer_class = ProfileSerializer
+    def get_queryset(self):
+        return self.queryset.filter(creator=self.request.user).all()
 
-    @action(detail=False, methods=['patch'],url_path='edit')
-    def edit_profile(self, request, *args, **kwargs):
-        serializer = self.get_serializer(request.user,data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({'profile':serializer.data},
-                        status=status.HTTP_200_OK)
+class ProfileViewSet(RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+class BlocklistViewSet(viewsets.ModelViewSet):
+    queryset = Blocklist.objects.all()
+    serializer_class = BlocklistSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(blocker=self.request.user)
+
+    def get_queryset(self):
+        return self.queryset.filter(blocker=self.request.user)
